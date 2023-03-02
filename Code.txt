@@ -1,0 +1,157 @@
+import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from google.colab import drive
+
+from sklearn.model_selection import train_test_split, StratifiedKFold,cross_val_score
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report, accuracy_score, auc, roc_auc_score, roc_curve, RocCurveDisplay
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+drive.mount('/content/drive', force_remount=True)
+location ='drive/MyDrive/ML-Dataset/'
+list_of_files = os.listdir(location)
+
+df= pd.read_csv(location+'wdbc.data', sep=",",header=None)
+df
+
+#features
+X = df.iloc[:, 2:].values
+#target
+y = df.iloc[:, [1]].values
+
+# encoding
+le = LabelEncoder()
+y=le.fit_transform(y)
+
+cross_validation = StratifiedKFold(n_splits=5,shuffle=True,random_state=42)
+
+conf_matrix_list_of_arrays = []
+scores = []
+sensitivity_scores=[]
+specificity_scores=[]
+decisionTreeAccuracy=[]
+rfAccuracy=[]
+tprs, aucs = [], []
+mean_fpr = np.linspace(0, 1, 100)
+
+"""Decision Tree"""
+
+fig, ax = plt.subplots()
+model = DecisionTreeClassifier()
+
+decisionTreeAcc = cross_val_score(DecisionTreeClassifier(random_state= 42), X, y, cv= cross_validation, scoring="accuracy")
+decisionTreeF1 = cross_val_score(DecisionTreeClassifier(random_state= 42), X, y, cv= cross_validation, scoring="f1")
+decisionTreeAUC = cross_val_score(DecisionTreeClassifier(random_state=  42), X, y, cv= cross_validation, scoring="roc_auc")
+decisionTreePrecision = cross_val_score(DecisionTreeClassifier(random_state=  42), X, y, cv= cross_validation, scoring="precision")
+
+for index, (train_index, test_index) in enumerate(cross_validation.split(X, y)): 
+    # print("Train Index: ", train_index, "\n")
+    # print("Test Index: ", test_index)
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+
+    model.fit(X_train, y_train)
+    y_pred= model.predict(X_test)
+    ac = accuracy_score(y_test,y_pred)
+
+    # confusion matrix
+    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+    conf_matrix_list_of_arrays.append(cm)
+    sensitivity1 = cm[0,0]/(cm[0,0]+cm[0,1])
+    specificity1 = cm[1,1]/(cm[1,0]+cm[1,1])
+    sensitivity_scores.append(sensitivity1)
+    specificity_scores.append(specificity1)
+    decisionTreeAccuracy.append(ac)
+
+    # ROC-AUC curve
+    plot = RocCurveDisplay.from_estimator(
+        model, X[test_index], y[test_index],
+        name="ROC fold {}".format(index),
+        ax=ax)
+    interp_tpr = np.interp(mean_fpr, plot.fpr, plot.tpr)
+    interp_tpr[0] = 0.0
+    tprs.append(interp_tpr)
+    aucs.append(plot.roc_auc)
+    ax.set(title="ROC with CV")
+
+mean_of_conf_matrix_arrays = np.mean(conf_matrix_list_of_arrays, axis=0)
+disp = ConfusionMatrixDisplay(confusion_matrix=mean_of_conf_matrix_arrays, display_labels=model.classes_)
+disp.plot()
+plt.show()
+
+np.mean(decisionTreeAccuracy)
+
+np.mean(sensitivity_scores)
+
+np.mean(specificity_scores)
+
+decisionTreeAcc.mean()
+
+decisionTreeF1.mean()
+
+decisionTreeAUC.mean()
+
+decisionTreePrecision.mean()
+
+"""Random Forest Classifier"""
+
+fig, ax = plt.subplots()
+clf = RandomForestClassifier()
+
+rfAcc = cross_val_score(RandomForestClassifier(random_state= 42), X, y, cv= cross_validation, scoring="accuracy")
+rfF1 = cross_val_score(RandomForestClassifier(random_state= 42), X, y, cv= cross_validation, scoring="f1")
+rfAUC = cross_val_score(RandomForestClassifier(random_state=  42), X, y, cv= cross_validation, scoring="roc_auc")
+rfPrecision = cross_val_score(RandomForestClassifier(random_state=  42), X, y, cv= cross_validation, scoring="precision")
+
+for index, (train_index, test_index) in enumerate(cross_validation.split(X, y)): 
+    # print("Train Index: ", train_index, "\n")
+    # print("Test Index: ", test_index)
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+
+    clf.fit(X_train, y_train)
+    y_pred= clf.predict(X_test)
+    ac = accuracy_score(y_test,y_pred)
+
+    # confusion matrix
+    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+    conf_matrix_list_of_arrays.append(cm)
+    sensitivity1 = cm[0,0]/(cm[0,0]+cm[0,1])
+    specificity1 = cm[1,1]/(cm[1,0]+cm[1,1])
+    sensitivity_scores.append(sensitivity1)
+    specificity_scores.append(specificity1)
+    rfAccuracy.append(ac)
+
+    # ROC-AUC curve
+    plot = RocCurveDisplay.from_estimator(
+        clf, X[test_index], y[test_index],
+        name="ROC fold {}".format(index),
+        ax=ax)
+    interp_tpr = np.interp(mean_fpr, plot.fpr, plot.tpr)
+    interp_tpr[0] = 0.0
+    tprs.append(interp_tpr)
+    aucs.append(plot.roc_auc)
+    ax.set(title="ROC with CV")
+
+mean_of_conf_matrix_arrays = np.mean(conf_matrix_list_of_arrays, axis=0)
+disp = ConfusionMatrixDisplay(confusion_matrix=mean_of_conf_matrix_arrays,display_labels=model.classes_)
+disp.plot()
+plt.show()
+
+np.mean(rfAccuracy)
+
+np.mean(sensitivity_scores)
+
+np.mean(specificity_scores)
+
+rfAcc.mean()
+
+rfF1.mean()
+
+rfPrecision.mean()
+
+rfAUC.mean()
