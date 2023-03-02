@@ -8,5 +8,7 @@ This project is a great example of using machine learning to analyze complex med
 
 
 
-[Assignment - 3 .docx](https://github.com/furqaan12/Breast-Cancer-Diagnosis/files/10867069/Assignment.-.3.docx)
 
+
+<img width="714" alt="Screenshot 2023-03-01 at 9 44 29 PM" src="https://user-images.githubusercontent.com/52755021/222317848-8dd18438-2f46-474a-9c32-d3be781ee929.png">
+<img width="715" alt="Screenshot 2023-03-01 at 9 44 32 PM" src="https://user-images.githubusercontent.com/52755021/222317854-4be705fa-9178-4e5c-8a42-5c2b24564947.png">
